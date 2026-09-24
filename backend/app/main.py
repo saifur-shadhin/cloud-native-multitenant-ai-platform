@@ -1,7 +1,14 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
+
+from sqlalchemy.orm import Session
+from fastapi import Depends
+
+from backend.app.core.database import get_db
+from backend.app.models.user import User as UserModel
+from backend.app.models.organization import Organization
+
 app=FastAPI()
-users = []
 
 class User(BaseModel):
     id: int
@@ -11,9 +18,9 @@ class User(BaseModel):
 
 # GET all users
 @app.get("/users")
-def get_users():
+def get_users(db: Session = Depends(get_db)):
+    users = db.query(UserModel).all()
     return users
-
 
 @app.post("/users")
 def create_user(user: User):
@@ -65,3 +72,18 @@ def root():
     return {
         "message": "Cloud-Native Multi-Tenant AI Platform is running!"
     }
+@app.get("/organizations")
+def get_organizations(db: Session = Depends(get_db)):
+    organizations = db.query(Organization).all()
+    return organizations
+
+@app.get("/organizations/{organization_id}/users")
+def get_organization_users(
+    organization_id: int,
+    db: Session = Depends(get_db)
+):
+    users = db.query(UserModel).filter(
+        UserModel.organization_id == organization_id
+    ).all()
+
+    return users
