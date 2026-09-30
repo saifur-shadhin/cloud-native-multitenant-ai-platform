@@ -127,6 +127,16 @@ def create_user(
     user: UserCreate,
     db: Session = Depends(get_db)
 ):
+    organization = db.query(Organization).filter(
+        Organization.id == user.organization_id
+    ).first()
+
+    if not organization:
+        raise HTTPException(
+            status_code=404,
+            detail="Organization not found"
+        )
+
     new_user = UserModel(
         name=user.name,
         email=user.email,
